@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Damas</title>
+    <style>
+        body { background-image: url('dama.jpg');
+        text-align: center; }
+        .board { display: grid; grid-template-columns: repeat(8, 60px); width: 480px; margin: auto; }
+        .square { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+        .black { background-color: #769656; }
+        .white { background-color: #161615; }
+        .piece { width: 50px; height: 50px; border-radius: 50%; cursor: pointer; }
+        .red { background-color: red; }
+        .blue { background-color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Jogo de Damas</h1>
+    <div class="board" id="board"></div>
+    <h2 id="winner"></h2>
+    <script>
+        const board = document.getElementById("board");
+        const winnerDisplay = document.getElementById("winner");
+        let turn = "red";
+        let selectedPiece = null;
+        let redPieces = 12;
+        let bluePieces = 12;
+        
+        function createBoard() {
+            for (let row = 0; row < 8; row++) {
+                for (let col = 0; col < 8; col++) {
+                    const square = document.createElement("div");
+                    square.classList.add("square", (row + col) % 2 === 0 ? "white" : "black");
+                    square.dataset.row = row;
+                    square.dataset.col = col;
+                    square.addEventListener("click", () => movePiece(square));
+                    board.appendChild(square);
+
+                    if ((row + col) % 2 !== 0 && (row < 3 || row > 4)) {
+                        const piece = document.createElement("div");
+                        piece.classList.add("piece", row < 3 ? "red" : "blue");
+                        piece.dataset.row = row;
+                        piece.dataset.col = col;
+                        piece.addEventListener("click", (event) => selectPiece(event, piece));
+                        square.appendChild(piece);
+                    }
+                }
+            }
+        }
+
+        function selectPiece(event, piece) {
+            event.stopPropagation();
+            if (piece.classList.contains(turn)) {
+                if (selectedPiece) {
+                    selectedPiece.style.border = "none";
+                }
+                selectedPiece = piece;
+                piece.style.border = "3px solid yellow";
+            }
+        }
+
+        function movePiece(square) {
+            if (selectedPiece) {
+                let oldRow = parseInt(selectedPiece.dataset.row);
+                let oldCol = parseInt(selectedPiece.dataset.col);
+                let newRow = parseInt(square.dataset.row);
+                let newCol = parseInt(square.dataset.col);
+
+                if (isValidMove(oldRow, oldCol, newRow, newCol)) {
+                    let middlePiece = getMiddlePiece(oldRow, oldCol, newRow, newCol);
+                    if (middlePiece) {
+                        middlePiece.remove();
+                        updatePieceCount(middlePiece.classList.contains("red") ? "red" : "blue");
+                    }
+                    
+                    square.appendChild(selectedPiece);
+                    selectedPiece.dataset.row = newRow;
+                    selectedPiece.dataset.col = newCol;
+                    selectedPiece.style.border = "none";
+                    selectedPiece = null;
+                    turn = turn === "red" ? "blue" : "red";
+                    checkWinner();
+                }
+            }
+        }
+
+        function isValidMove(oldRow, oldCol, newRow, newCol) {
+            let rowDiff = Math.abs(newRow - oldRow);
+            let colDiff = Math.abs(newCol - oldCol);
+            if (rowDiff === 1 && colDiff === 1) return true; // Movimento normal
+            if (rowDiff === 2 && colDiff === 2) return getMiddlePiece(oldRow, oldCol, newRow, newCol) !== null; // Captura
+            return false;
+        }
+
+        function getMiddlePiece(oldRow, oldCol, newRow, newCol) {
+            let middleRow = (oldRow + newRow) / 2;
+            let middleCol = (oldCol + newCol) / 2;
+            let squares = document.querySelectorAll(".square");
+            for (let square of squares) {
+                if (square.dataset.row == middleRow && square.dataset.col == middleCol && square.firstChild) {
+                    return square.firstChild;
+                }
+            }
+            return null;
+        }
+
+        function updatePieceCount(color) {
+            if (color === "red") {
+                redPieces--;
+            } else {
+                bluePieces--;
+            }
+        }
+
+        function checkWinner() {
+            if (redPieces === 0) {
+                winnerDisplay.innerText = "Azul venceu!";
+            } else if (bluePieces === 0) {
+                winnerDisplay.innerText = "Vermelho venceu!";
+            }
+        }
+
+        createBoard();
+    </script>
+</body>
+</html>
+
